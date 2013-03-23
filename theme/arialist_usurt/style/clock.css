@@ -1,0 +1,14 @@
+#clock {
+	float:right;
+	font-size: 14px;
+}
+
+.odd {
+	padding: 2px;
+	background-color: #ccc;
+}
+
+.even {
+	padding: 2px;
+	background-color: #ccc;
+}
