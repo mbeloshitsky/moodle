@@ -3,7 +3,7 @@ function addNulls (val) {
 }
 
 function displayCurrentTime () {
-	var weekDays = ['Neverland', 'Пнд', 'Втр', 'Срд', 'Чтв', 'Птн', 'Сбт', 'Вск'];
+	var weekDays = ['Вскр', 'Пнд', 'Втр', 'Срд', 'Чтв', 'Птн', 'Сбт'];
 	var timeWidget = document.getElementById('clock');
 	var now = new Date();
 	var nowYear = new Date('1.1.'+now.getFullYear());
