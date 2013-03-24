@@ -205,7 +205,7 @@ echo '<div class="userprofile">';
 
 // Print the standard content of this page, the basic profile info
 
-echo $OUTPUT->heading(fullname($user));
+// echo $OUTPUT->heading(fullname($user));
 
 if (is_mnet_remote_user($user)) {
     $sql = "SELECT h.id, h.name, h.wwwroot,

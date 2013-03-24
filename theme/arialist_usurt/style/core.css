@@ -13,7 +13,7 @@ a:hover {
 
 #wrapper {
     padding:0 100px;
-    border-top:15px solid #eee;
+    /* border-top:15px solid #eee; */
 }
 
 h2,h3,h4,h5,h6 {
@@ -44,7 +44,7 @@ fieldset#general legend {
 ----------------------------*/
 
 #page-header {
-    padding: 50px 0 25px;
+    padding: 30px 0 15px;
 }
 
 #page-site-index #page-header {
@@ -79,9 +79,9 @@ fieldset#general legend {
 ----------------------------*/
 
 .navbar {
-    background: #f1f1f1;
+ /*   background: #f1f1f1;*/
     padding: 5px 10px;
-    border: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
 }
 
 .breadcrumb .sep {

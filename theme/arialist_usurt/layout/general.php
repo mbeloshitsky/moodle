@@ -47,6 +47,14 @@ echo $OUTPUT->doctype() ?>
 
 <div id="page">
 
+    <?php if ($hasnavbar) { ?>
+       	<div class="navbar">
+            <div class="wrapper clearfix">
+                <div class="breadcrumb"><?php echo $OUTPUT->navbar(); ?></div>
+		<div id="clock"></div>
+            </div>
+        </div>
+    <?php } ?>
     <?php if ($hasheading || $hasnavbar || !empty($courseheader) || !empty($coursefooter)) { ?>
        <div id="wrapper" class="clearfix">
 
@@ -60,13 +68,13 @@ echo $OUTPUT->doctype() ?>
                         </div>
 			<div class="headermenu">
 			<table><tr><td>
-			<div id="clock"></div>
+       	        	<div class="navbutton"> <?php echo $PAGE->button; ?></div>
 			</td></tr><tr><td>
 			<?php
                             echo $OUTPUT->login_info();
-                                if (!empty($PAGE->layout_options['langmenu'])) {
-                                    echo $OUTPUT->lang_menu();
-                                }
+                                //if (!empty($PAGE->layout_options['langmenu'])) {
+                                //     echo $OUTPUT->lang_menu();
+                                //}
 			     echo $PAGE->headingmenu ?>
 			</td></tr></table>
                         </div>
@@ -75,14 +83,6 @@ echo $OUTPUT->doctype() ?>
             </div>
             <?php if (!empty($courseheader)) { ?>
                 <div id="course-header"><?php echo $courseheader; ?></div>
-            <?php } ?>
-            <?php if ($hasnavbar) { ?>
-                <div class="navbar">
-                    <div class="wrapper clearfix">
-                        <div class="breadcrumb"><?php echo $OUTPUT->navbar(); ?></div>
-                        <div class="navbutton"> <?php echo $PAGE->button; ?></div>
-                    </div>
-                </div>
             <?php } ?>
 
 <!-- END OF HEADER -->
