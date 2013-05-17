@@ -143,6 +143,7 @@ echo $OUTPUT->paging_bar($cohorts['totalcohorts'], $page, 25, $baseurl);
 
 if ($manager) {
     echo $OUTPUT->single_button(new moodle_url('/cohort/edit.php', array('contextid'=>$context->id)), get_string('add'));
+    echo $OUTPUT->single_button(new moodle_url('/cohort/import.php'), get_string('importcohorts', 'cohort'));
 }
 
 echo $OUTPUT->footer();
