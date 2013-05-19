@@ -3388,6 +3388,30 @@ function user_not_fully_set_up($user) {
 }
 
 /**
+ * Returns a message abount inconsistent user account.
+ *
+ * @param user $user A {@link $USER} object.
+ * @return string
+ */
+function user_get_not_fully_set_up_reason($user) {
+    if (isguestuser($user)) {
+        return '';
+    }
+    if (empty($user->firstname)) {
+	    return get_string('nofirstname');
+    } elseif (empty($user->lastname)) {
+	    return get_string('nolastname');
+    } elseif (empty($user->email)) {
+	    return get_string('noemail');
+    } elseif (over_bounce_threshold($user)) {
+	    return get_string('noconfirm');
+    } else {
+	    return 'Unexpected!';
+    }
+}
+
+
+/**
  * Check whether the user has exceeded the bounce threshold
  *
  * @global object

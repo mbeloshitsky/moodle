@@ -195,6 +195,11 @@ if ($frm and isset($frm->username)) {                             // Login WITH 
         if (user_not_fully_set_up($USER)) {
             $urltogo = $CFG->wwwroot.'/user/edit.php';
             // We don't delete $SESSION->wantsurl yet, so we get there later
+            echo $OUTPUT->header();
+	    echo $OUTPUT->notification(user_get_not_fully_set_up_reason($USER));
+	    echo $OUTPUT->single_button($urltogo, get_string('continue'), 'get');
+            echo $OUTPUT->footer();
+            exit;
 
         } else if (isset($SESSION->wantsurl) and (strpos($SESSION->wantsurl, $CFG->wwwroot) === 0 or strpos($SESSION->wantsurl, str_replace('http://', 'https://', $CFG->wwwroot)) === 0)) {
             $urltogo = $SESSION->wantsurl;    /// Because it's an address in this site

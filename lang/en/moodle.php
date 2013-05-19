@@ -1853,3 +1853,8 @@ $string['yourself'] = 'yourself';
 $string['yourteacher'] = 'your {$a}';
 $string['yourwordforx'] = 'Your word for \'{$a}\'';
 $string['zippingbackup'] = 'Zipping backup';
+$string['nofirstname'] = 'Your account contains empty first name. Please fill it.';
+$string['nolastname'] = 'Your account contains empty last name. Please fill it.';
+$string['noemail'] = 'Your account contains empty email. Please fill it.';
+$string['noconfirm'] = 'We are awaiting email confirmation of your account.';
+
