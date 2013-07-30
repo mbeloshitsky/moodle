@@ -48,9 +48,14 @@ class repository_filesystem extends repository {
     public function __construct($repositoryid, $context = SYSCONTEXTID, $options = array()) {
         global $CFG;
         parent::__construct($repositoryid, $context, $options);
-        $root = $CFG->dataroot.'/repository/';
+        $root = $CFG->dataroot . '/repository/';
         $subdir = $this->get_option('fs_path');
-        $this->root_path = $root . $subdir . '/';
+
+        $this->root_path = $root;
+        if (!empty($subdir)) {
+            $this->root_path .= $subdir . '/';
+        }
+
         if (!empty($options['ajax'])) {
             if (!is_dir($this->root_path)) {
                 $created = mkdir($this->root_path, $CFG->directorypermissions, true);
@@ -207,6 +212,7 @@ class repository_filesystem extends repository {
                 if (empty($choices)) {
                     $mform->addElement('static', '', '', get_string('nosubdir', 'repository_filesystem', $path));
                     $mform->addElement('hidden', 'fs_path', '');
+                    $mform->setType('fs_path', PARAM_PATH);
                 } else {
                     $mform->addElement('select', 'fs_path', $fieldname, $choices);
                     $mform->addElement('static', null, '',  get_string('information','repository_filesystem', $path));
@@ -332,5 +338,14 @@ class repository_filesystem extends repository {
         } else {
             send_file_not_found();
         }
+    }
+
+    /**
+     * Is this repository accessing private data?
+     *
+     * @return bool
+     */
+    public function contains_private_data() {
+        return false;
     }
 }

@@ -232,20 +232,9 @@ abstract class backup_questions_activity_structure_step extends backup_activity_
         // Set the sources
         $quba->set_source_table('question_usages',
                 array('id'                => '../' . $usageidname));
-        $qa->set_source_sql('
-                SELECT *
-                FROM {question_attempts}
-                WHERE questionusageid = :questionusageid
-                ORDER BY slot',
-                array('questionusageid'   => backup::VAR_PARENTID));
-        $step->set_source_sql('
-                SELECT *
-                FROM {question_attempt_steps}
-                WHERE questionattemptid = :questionattemptid
-                ORDER BY sequencenumber',
-                array('questionattemptid' => backup::VAR_PARENTID));
-        $variable->set_source_table('question_attempt_step_data',
-                array('attemptstepid'     => backup::VAR_PARENTID));
+        $qa->set_source_table('question_attempts', array('questionusageid' => backup::VAR_PARENTID), 'slot ASC');
+        $step->set_source_table('question_attempt_steps', array('questionattemptid' => backup::VAR_PARENTID), 'sequencenumber ASC');
+        $variable->set_source_table('question_attempt_step_data', array('attemptstepid' => backup::VAR_PARENTID));
 
         // Annotate ids
         $qa->annotate_ids('question', 'questionid');
@@ -522,6 +511,7 @@ class backup_course_structure_step extends backup_structure_step {
         $course->annotate_ids('grouping', 'defaultgroupingid');
 
         $course->annotate_files('course', 'summary', null);
+        $course->annotate_files('course', 'overviewfiles', null);
         $course->annotate_files('course', 'legacy', null);
 
         // Return root element ($course)
@@ -569,7 +559,7 @@ class backup_enrolments_structure_step extends backup_structure_step {
         $userenrolments->add_child($enrolment);
 
         // Define sources - the instances are restored using the same sortorder, we do not need to store it in xml and deal with it afterwards.
-        $enrol->set_source_sql("SELECT * FROM {enrol} WHERE courseid = :courseid ORDER BY sortorder", array('courseid' => backup::VAR_COURSEID));
+        $enrol->set_source_table('enrol', array('courseid' => backup::VAR_COURSEID), 'sortorder ASC');
 
         // User enrolments only added only if users included
         if ($users) {
@@ -819,6 +809,83 @@ class backup_comments_structure_step extends backup_structure_step {
 
         // Return the root element (comments)
         return $comments;
+    }
+}
+
+/**
+ * structure step in charge of constructing the badges.xml file for all the badges found
+ * in a given context
+ */
+class backup_badges_structure_step extends backup_structure_step {
+
+    protected function execute_condition() {
+        // Check that all activities have been included.
+        if ($this->task->is_excluding_activities()) {
+            return false;
+        }
+        return true;
+    }
+
+    protected function define_structure() {
+
+        // Define each element separated.
+
+        $badges = new backup_nested_element('badges');
+        $badge = new backup_nested_element('badge', array('id'), array('name', 'description',
+                'timecreated', 'timemodified', 'usercreated', 'usermodified', 'issuername',
+                'issuerurl', 'issuercontact', 'expiredate', 'expireperiod', 'type', 'courseid',
+                'message', 'messagesubject', 'attachment', 'notification', 'status', 'nextcron'));
+
+        $criteria = new backup_nested_element('criteria');
+        $criterion = new backup_nested_element('criterion', array('id'), array('badgeid',
+                'criteriatype', 'method'));
+
+        $parameters = new backup_nested_element('parameters');
+        $parameter = new backup_nested_element('parameter', array('id'), array('critid',
+                'name', 'value', 'criteriatype'));
+
+        $manual_awards = new backup_nested_element('manual_awards');
+        $manual_award = new backup_nested_element('manual_award', array('id'), array('badgeid',
+                'recipientid', 'issuerid', 'issuerrole', 'datemet'));
+
+        // Build the tree.
+
+        $badges->add_child($badge);
+        $badge->add_child($criteria);
+        $criteria->add_child($criterion);
+        $criterion->add_child($parameters);
+        $parameters->add_child($parameter);
+        $badge->add_child($manual_awards);
+        $manual_awards->add_child($manual_award);
+
+        // Define sources.
+
+        $badge->set_source_table('badge', array('courseid' => backup::VAR_COURSEID));
+        $criterion->set_source_table('badge_criteria', array('badgeid' => backup::VAR_PARENTID));
+
+        $parametersql = 'SELECT cp.*, c.criteriatype
+                             FROM {badge_criteria_param} cp JOIN {badge_criteria} c
+                                 ON cp.critid = c.id
+                             WHERE critid = :critid';
+        $parameterparams = array('critid' => backup::VAR_PARENTID);
+        $parameter->set_source_sql($parametersql, $parameterparams);
+
+        $manual_award->set_source_table('badge_manual_award', array('badgeid' => backup::VAR_PARENTID));
+
+        // Define id annotations.
+
+        $badge->annotate_ids('user', 'usercreated');
+        $badge->annotate_ids('user', 'usermodified');
+        $criterion->annotate_ids('badge', 'badgeid');
+        $parameter->annotate_ids('criterion', 'critid');
+        $badge->annotate_files('badges', 'badgeimage', 'id');
+        $manual_award->annotate_ids('badge', 'badgeid');
+        $manual_award->annotate_ids('user', 'recipientid');
+        $manual_award->annotate_ids('user', 'issuerid');
+        $manual_award->annotate_ids('role', 'issuerrole');
+
+        // Return the root element ($badges).
+        return $badges;
     }
 }
 
@@ -1820,6 +1887,10 @@ class backup_questions_structure_step extends backup_structure_step {
         $qhint = new backup_nested_element('question_hint', array('id'), array(
             'hint', 'hintformat', 'shownumcorrect', 'clearwrong', 'options'));
 
+        $tags = new backup_nested_element('tags');
+
+        $tag = new backup_nested_element('tag', array('id'), array('name', 'rawname'));
+
         // Build the tree
 
         $qcategories->add_child($qcategory);
@@ -1827,6 +1898,9 @@ class backup_questions_structure_step extends backup_structure_step {
         $questions->add_child($question);
         $question->add_child($qhints);
         $qhints->add_child($qhint);
+
+        $question->add_child($tags);
+        $tags->add_child($tag);
 
         // Define the sources
 
@@ -1846,6 +1920,12 @@ class backup_questions_structure_step extends backup_structure_step {
                 WHERE questionid = :questionid
                 ORDER BY id',
                 array('questionid' => backup::VAR_PARENTID));
+
+        $tag->set_source_sql("SELECT t.id, t.name, t.rawname
+                              FROM {tag} t
+                              JOIN {tag_instance} ti ON ti.tagid = t.id
+                              WHERE ti.itemid = ?
+                              AND ti.itemtype = 'question'", array(backup::VAR_PARENTID));
 
         // don't need to annotate ids nor files
         // (already done by {@link backup_annotate_all_question_files}

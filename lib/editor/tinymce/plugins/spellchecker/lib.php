@@ -32,6 +32,16 @@ class tinymce_spellchecker extends editor_tinymce_plugin {
             array $options = null) {
         global $CFG;
 
+        if (!$this->is_legacy_browser()) {
+            return;
+        }
+
+        // Check some speller is configured.
+        $engine = $this->get_config('spellengine', '');
+        if (!$engine or $engine === 'GoogleSpell') {
+            return;
+        }
+
         // Check at least one language is supported.
         $spelllanguagelist = $this->get_config('spelllanguagelist', '');
         if ($spelllanguagelist !== '') {
@@ -47,5 +57,14 @@ class tinymce_spellchecker extends editor_tinymce_plugin {
                     '/lib/editor/tinymce/plugins/spellchecker/rpc.php';
             $params['spellchecker_languages'] = $spelllanguagelist;
         }
+    }
+
+    protected function is_legacy_browser() {
+        // IE8 and IE9 are the only supported browsers that do not have spellchecker.
+        if (check_browser_version('MSIE', 5) and !check_browser_version('MSIE', 10)) {
+            return true;
+        }
+        // The rest of browsers supports spellchecking or is horribly outdated and we do not care...
+        return false;
     }
 }

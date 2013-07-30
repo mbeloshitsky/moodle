@@ -14,5 +14,9 @@ a {
 	left: [[setting:regionwidth]];
 	width: [[setting:regionwidth]];
 }
+
+.coursebox { background: white; }
+.coursebox .info { width: 100%; }
+.coursebox .enrolmenticons { width: 128px;}
 /** Custom CSS **/
 [[setting:customcss]]

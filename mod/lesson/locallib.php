@@ -696,7 +696,7 @@ abstract class lesson_add_page_form_base extends moodleform {
         $mform = $this->_form;
         $editoroptions = $this->_customdata['editoroptions'];
 
-        $mform->addElement('header', 'qtypeheading', get_string('addaquestionpage', 'lesson', get_string($this->qtypestring, 'lesson')));
+        $mform->addElement('header', 'qtypeheading', get_string('createaquestionpage', 'lesson', get_string($this->qtypestring, 'lesson')));
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
@@ -722,6 +722,7 @@ abstract class lesson_add_page_form_base extends moodleform {
 
         if ($this->_customdata['edit'] === true) {
             $mform->addElement('hidden', 'edit', 1);
+            $mform->setType('edit', PARAM_BOOL);
             $this->add_action_buttons(get_string('cancel'), get_string('savepage', 'lesson'));
         } else if ($this->qtype === 'questiontype') {
             $this->add_action_buttons(get_string('cancel'), get_string('addaquestionpage', 'lesson'));
@@ -761,10 +762,12 @@ abstract class lesson_add_page_form_base extends moodleform {
         if ($label === null) {
             $label = get_string("score", "lesson");
         }
+
         if (is_int($name)) {
             $name = "score[$name]";
         }
         $this->_form->addElement('text', $name, $label, array('size'=>5));
+        $this->_form->setType($name, PARAM_INT);
         if ($value !== null) {
             $this->_form->setDefault($name, $value);
         }
@@ -774,12 +777,12 @@ abstract class lesson_add_page_form_base extends moodleform {
      * Convenience function: Adds an answer editor
      *
      * @param int $count The count of the element to add
-     * @param string $label, NULL means default
+     * @param string $label, null means default
      * @param bool $required
      * @return void
      */
-    protected final function add_answer($count, $label = NULL, $required = false) {
-        if ($label === NULL) {
+    protected final function add_answer($count, $label = null, $required = false) {
+        if ($label === null) {
             $label = get_string('answer', 'lesson');
         }
         $this->_form->addElement('editor', 'answer_editor['.$count.']', $label, array('rows'=>'4', 'columns'=>'80'), array('noclean'=>true));
@@ -792,12 +795,12 @@ abstract class lesson_add_page_form_base extends moodleform {
      * Convenience function: Adds an response editor
      *
      * @param int $count The count of the element to add
-     * @param string $label, NULL means default
+     * @param string $label, null means default
      * @param bool $required
      * @return void
      */
-    protected final function add_response($count, $label = NULL, $required = false) {
-        if ($label === NULL) {
+    protected final function add_response($count, $label = null, $required = false) {
+        if ($label === null) {
             $label = get_string('response', 'lesson');
         }
         $this->_form->addElement('editor', 'response_editor['.$count.']', $label, array('rows'=>'4', 'columns'=>'80'), array('noclean'=>true));
@@ -948,7 +951,7 @@ class lesson extends lesson_base {
         require_once($CFG->libdir.'/gradelib.php');
         require_once($CFG->dirroot.'/calendar/lib.php');
 
-        $DB->delete_records("lesson", array("id"=>$this->properties->id));;
+        $DB->delete_records("lesson", array("id"=>$this->properties->id));
         $DB->delete_records("lesson_pages", array("lessonid"=>$this->properties->id));
         $DB->delete_records("lesson_answers", array("lessonid"=>$this->properties->id));
         $DB->delete_records("lesson_attempts", array("lessonid"=>$this->properties->id));
@@ -963,7 +966,7 @@ class lesson extends lesson_base {
             }
         }
 
-        grade_update('mod/lesson', $this->properties->course, 'mod', 'lesson', $this->properties->id, 0, NULL, array('deleted'=>1));
+        grade_update('mod/lesson', $this->properties->course, 'mod', 'lesson', $this->properties->id, 0, null, array('deleted'=>1));
         return true;
     }
 
@@ -2680,6 +2683,40 @@ class lesson_page_type_manager {
     }
 
     /**
+     * This function detects errors in the ordering between 2 pages and updates the page records.
+     *
+     * @param stdClass $page1 Either the first of 2 pages or null if the $page2 param is the first in the list.
+     * @param stdClass $page1 Either the second of 2 pages or null if the $page1 param is the last in the list.
+     */
+    protected function check_page_order($page1, $page2) {
+        global $DB;
+        if (empty($page1)) {
+            if ($page2->prevpageid != 0) {
+                debugging("***prevpageid of page " . $page2->id . " set to 0***");
+                $page2->prevpageid = 0;
+                $DB->set_field("lesson_pages", "prevpageid", 0, array("id" => $page2->id));
+            }
+        } else if (empty($page2)) {
+            if ($page1->nextpageid != 0) {
+                debugging("***nextpageid of page " . $page1->id . " set to 0***");
+                $page1->nextpageid = 0;
+                $DB->set_field("lesson_pages", "nextpageid", 0, array("id" => $page1->id));
+            }
+        } else {
+            if ($page1->nextpageid != $page2->id) {
+                debugging("***nextpageid of page " . $page1->id . " set to " . $page2->id . "***");
+                $page1->nextpageid = $page2->id;
+                $DB->set_field("lesson_pages", "nextpageid", $page2->id, array("id" => $page1->id));
+            }
+            if ($page2->prevpageid != $page1->id) {
+                debugging("***prevpageid of page " . $page2->id . " set to " . $page1->id . "***");
+                $page2->prevpageid = $page1->id;
+                $DB->set_field("lesson_pages", "prevpageid", $page1->id, array("id" => $page2->id));
+            }
+        }
+    }
+
+    /**
      * This function loads ALL pages that belong to the lesson.
      *
      * @param lesson $lesson
@@ -2697,10 +2734,18 @@ class lesson_page_type_manager {
 
         $orderedpages = array();
         $lastpageid = 0;
-
-        while (true) {
+        $morepages = true;
+        while ($morepages) {
+            $morepages = false;
             foreach ($pages as $page) {
                 if ((int)$page->prevpageid === (int)$lastpageid) {
+                    // Check for errors in page ordering and fix them on the fly.
+                    $prevpage = null;
+                    if ($lastpageid !== 0) {
+                        $prevpage = $orderedpages[$lastpageid];
+                    }
+                    $this->check_page_order($prevpage, $page);
+                    $morepages = true;
                     $orderedpages[$page->id] = $page;
                     unset($pages[$page->id]);
                     $lastpageid = $page->id;
@@ -2711,6 +2756,23 @@ class lesson_page_type_manager {
                     }
                 }
             }
+        }
+
+        // Add remaining pages and fix the nextpageid links for each page.
+        foreach ($pages as $page) {
+            // Check for errors in page ordering and fix them on the fly.
+            $prevpage = null;
+            if ($lastpageid !== 0) {
+                $prevpage = $orderedpages[$lastpageid];
+            }
+            $this->check_page_order($prevpage, $page);
+            $orderedpages[$page->id] = $page;
+            unset($pages[$page->id]);
+            $lastpageid = $page->id;
+        }
+
+        if ($lastpageid !== 0) {
+            $this->check_page_order($orderedpages[$lastpageid], null);
         }
 
         return $orderedpages;

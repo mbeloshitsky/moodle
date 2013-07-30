@@ -121,8 +121,8 @@ h2.main, h3.main, h4.main {margin:1em;padding:0;text-align:center;}
 .editcourse td,
 .generaltable th,
 .generaltable td,
-#page-admin-course-category .generalbox th,
-#page-admin-course-category .generalbox td,
+#page-admin-course-manage .generalbox th,
+#page-admin-course-manage .generalbox td,
 #attempts th,
 #attempts td,
 .plugincompattable th,
@@ -144,7 +144,7 @@ th.header,
 .formtable tbody th,
 .generalbox th,
 .generaltable th.header {background-image:url([[pix:theme|gradient_h]]);background-repeat:repeat-x;border-top:1px solid #C6BDA8;background-color:#E3DFD4;}
-/*#modules, .compatibleblockstable {margin-left:auto; margin-right:auto;} waiting for MDL-26760*/
+#modules, #compatibleblockstable {margin-left:auto; margin-right:auto;}
 table.flexible .r0, table.generaltable .r0 {background-color: #F0F0F0;}
 table.flexible .r1, table.generaltable .r1 {background-color: #FAFAFA;}
 
@@ -160,7 +160,7 @@ tr.rolecap {border-top:1px dashed #F30;}
 tr.rolecapheading + tr.rolecap {border-top:none;}
 
 /* course categories */
-#page-admin-course-index .editcourse td div.singleselect {text-align:left;}
+#page-admin-course-manage .editcourse td div.singleselect {text-align:left;}
 
 /* course */
 /* ul.topics .section span.commands {float:right;} /* distanza dei comandi dagli elementi del corso */
@@ -188,9 +188,6 @@ table td.cell p {margin:0;}
 #page-footer-content {text-align:center;border:7px double #E3DFD4;margin:0;padding:0.5em;}
 #page-footer .logininfo {padding:0.3em 0 0.7em 0;}
 #page-footer .moodledocs {text-align:center;background-color:#EFEFEF;padding:0.7em 0 0.8em 0;}
-
-/* js help messages */
-#helppopupbox .helpheading {margin-top:1em;}
 
 /* pre, code, tt */
 pre, code, tt {

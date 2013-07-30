@@ -106,6 +106,7 @@ abstract class backup_cron_automated_helper {
         if ($status) {
 
             mtrace('Running required automated backups...');
+            cron_trace_time_and_memory();
 
             // This could take a while!
             @set_time_limit(0);
@@ -382,6 +383,7 @@ abstract class backup_cron_automated_helper {
                 'blocks' => 'backup_auto_blocks',
                 'filters' => 'backup_auto_filters',
                 'comments' => 'backup_auto_comments',
+                'badges' => 'backup_auto_badges',
                 'completion_information' => 'backup_auto_userscompletion',
                 'logs' => 'backup_auto_logs',
                 'histories' => 'backup_auto_histories'

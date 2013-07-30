@@ -90,7 +90,7 @@ abstract class session_data_store extends cache_store {
  * @copyright  2012 Sam Hemelryk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class cachestore_session extends session_data_store implements cache_is_key_aware {
+class cachestore_session extends session_data_store implements cache_is_key_aware, cache_is_searchable {
 
     /**
      * The name of the store
@@ -137,7 +137,19 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      */
     public static function get_supported_features(array $configuration = array()) {
         return self::SUPPORTS_DATA_GUARANTEE +
-               self::SUPPORTS_NATIVE_TTL;
+               self::SUPPORTS_NATIVE_TTL +
+               self::IS_SEARCHABLE;
+    }
+
+    /**
+     * Returns false as this store does not support multiple identifiers.
+     * (This optional function is a performance optimisation; it must be
+     * consistent with the value from get_supported_features.)
+     *
+     * @return bool False
+     */
+    public function supports_multiple_identifiers() {
+        return false;
     }
 
     /**
@@ -206,11 +218,10 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      * @return mixed The data that was associated with the key, or false if the key did not exist.
      */
     public function get($key) {
-        $maxtime = cache::now() - $this->ttl;
-        if (array_key_exists($key, $this->store)) {
+        if (isset($this->store[$key])) {
             if ($this->ttl == 0) {
-                return $this->store[$key];
-            } else if ($this->store[$key][1] >= $maxtime) {
+                return $this->store[$key][0];
+            } else if ($this->store[$key][1] >= (cache::now() - $this->ttl)) {
                 return $this->store[$key][0];
             }
         }
@@ -228,12 +239,15 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      */
     public function get_many($keys) {
         $return = array();
-        $maxtime = cache::now() - $this->ttl;
+        if ($this->ttl != 0) {
+            $maxtime = cache::now() - $this->ttl;
+        }
+
         foreach ($keys as $key) {
             $return[$key] = false;
-            if (array_key_exists($key, $this->store)) {
+            if (isset($this->store[$key])) {
                 if ($this->ttl == 0) {
-                    $return[$key] = $this->store[$key];
+                    $return[$key] = $this->store[$key][0];
                 } else if ($this->store[$key][1] >= $maxtime) {
                     $return[$key] = $this->store[$key][0];
                 }
@@ -251,7 +265,7 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      */
     public function set($key, $data) {
         if ($this->ttl == 0) {
-            $this->store[$key] = $data;
+            $this->store[$key][0] = $data;
         } else {
             $this->store[$key] = array($data, cache::now());
         }
@@ -282,11 +296,10 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      * @return bool
      */
     public function has($key) {
-        $maxtime = cache::now() - $this->ttl;
-        if (array_key_exists($key, $this->store)) {
+        if (isset($this->store[$key])) {
             if ($this->ttl == 0) {
                 return true;
-            } else if ($this->store[$key][1] >= $maxtime) {
+            } else if ($this->store[$key][1] >= (cache::now() - $this->ttl)) {
                 return true;
             }
         }
@@ -300,9 +313,12 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      * @return bool
      */
     public function has_all(array $keys) {
-        $maxtime = cache::now() - $this->ttl;
+        if ($this->ttl != 0) {
+            $maxtime = cache::now() - $this->ttl;
+        }
+
         foreach ($keys as $key) {
-            if (!array_key_exists($key, $this->store)) {
+            if (!isset($this->store[$key])) {
                 return false;
             }
             if ($this->ttl != 0 && $this->store[$key][1] < $maxtime) {
@@ -319,9 +335,12 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      * @return bool
      */
     public function has_any(array $keys) {
-        $maxtime = cache::now() - $this->ttl;
+        if ($this->ttl != 0) {
+            $maxtime = cache::now() - $this->ttl;
+        }
+
         foreach ($keys as $key) {
-            if (array_key_exists($key, $this->store) && ($this->ttl == 0 || $this->store[$key][1] >= $maxtime)) {
+            if (isset($this->store[$key]) && ($this->ttl == 0 || $this->store[$key][1] >= $maxtime)) {
                 return true;
             }
         }
@@ -335,8 +354,9 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      * @return bool Returns true if the operation was a success, false otherwise.
      */
     public function delete($key) {
+        $result = isset($this->store[$key]);
         unset($this->store[$key]);
-        return true;
+        return $result;
     }
 
     /**
@@ -348,8 +368,10 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
     public function delete_many(array $keys) {
         $count = 0;
         foreach ($keys as $key) {
+            if (isset($this->store[$key])) {
+                $count++;
+            }
             unset($this->store[$key]);
-            $count++;
         }
         return $count;
     }
@@ -399,5 +421,29 @@ class cachestore_session extends session_data_store implements cache_is_key_awar
      */
     public function my_name() {
         return $this->name;
+    }
+
+    /**
+     * Finds all of the keys being stored in the cache store instance.
+     *
+     * @return array
+     */
+    public function find_all() {
+        return array_keys($this->store);
+    }
+
+    /**
+     * Finds all of the keys whose keys start with the given prefix.
+     *
+     * @param string $prefix
+     */
+    public function find_by_prefix($prefix) {
+        $return = array();
+        foreach ($this->find_all() as $key) {
+            if (strpos($key, $prefix) === 0) {
+                $return[] = $key;
+            }
+        }
+        return $return;
     }
 }

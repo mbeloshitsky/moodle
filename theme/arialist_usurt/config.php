@@ -214,14 +214,14 @@ $THEME->javascripts = array(
 // As above but will be included in the page footer.
 ////////////////////////////////////////////////////
 
-$THEME->larrow  = '&lang;';
+$THEME->larrow  = '&laquo;';
 
 ////////////////////////////////////////////////////
 // Overrides the left arrow image used throughout
 // Moodle
 ////////////////////////////////////////////////////
 
-$THEME->rarrow  = '&rang;';
+$THEME->rarrow  = '&raquo;';
 
 ////////////////////////////////////////////////////
 // Overrides the right arrow image used throughout Moodle

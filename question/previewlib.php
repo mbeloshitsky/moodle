@@ -56,17 +56,17 @@ class preview_options_form extends moodleform {
                 array('size' => '5'));
         $mform->setType('maxmark', PARAM_FLOAT);
 
-        $mform->addElement('submit', 'saverestart',
-                get_string('restartwiththeseoptions', 'question'));
-
-        $mform->addElement('header', 'optionsheader', get_string('displayoptions', 'question'));
-
         if ($this->_customdata['maxvariant'] > 1) {
             $variants = range(1, $this->_customdata['maxvariant']);
             $mform->addElement('select', 'variant', get_string('questionvariant', 'question'),
                     array_combine($variants, $variants));
         }
         $mform->setType('variant', PARAM_INT);
+
+        $mform->addElement('submit', 'saverestart',
+                get_string('restartwiththeseoptions', 'question'));
+
+        $mform->addElement('header', 'optionsheader', get_string('displayoptions', 'question'));
 
         $mform->addElement('select', 'correctness', get_string('whethercorrect', 'question'),
                 $hiddenofvisible);
@@ -123,7 +123,6 @@ class question_preview_options extends question_display_options {
      * Constructor.
      */
     public function __construct($question) {
-        global $CFG;
         $this->behaviour = 'deferredfeedback';
         $this->maxmark = $question->defaultmark;
         $this->variant = null;
@@ -169,9 +168,10 @@ class question_preview_options extends question_display_options {
      * Load the value of the options from the user_preferences table.
      */
     public function load_user_defaults() {
+        $defaults = get_config('question_preview');
         foreach ($this->get_user_pref_fields() as $field) {
             $this->$field = get_user_preferences(
-                    self::OPTIONPREFIX . $field, $this->$field);
+                    self::OPTIONPREFIX . $field, $defaults->$field);
         }
         $this->numpartscorrect = $this->feedback;
     }

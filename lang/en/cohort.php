@@ -58,7 +58,3 @@ $string['unknowncohort'] = 'Unknown cohort ({$a})!';
 $string['useradded'] = 'User added to cohort "{$a}"';
 $string['search'] = 'Search';
 $string['searchcohort'] = 'Search cohort';
-$string['importcohorts'] = 'Import cohort';
-$string['importcohorts_help'] = 'Load cohorts from CSV file';
-$string['cohortaddedsuccesfully'] = 'Cohort {$a} added succesfully';
-$string['cohortnotaddederror'] = 'Error adding {$a} cohort';
