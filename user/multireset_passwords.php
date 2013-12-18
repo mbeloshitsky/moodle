@@ -25,6 +25,7 @@ function cohort_get_members($cohortid) {
 }
 
 function cohort_get_name($cohortid) {
+    global $DB;
     return $DB->get_record_sql("select name from {cohort} where id=:id", array('id'=>$cohortid))->name;
 }
 
