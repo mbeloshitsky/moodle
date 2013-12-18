@@ -15,7 +15,7 @@ function cohort_get_members($cohortid) {
     global $DB;
 
     $params = array('cohortid'=>$cohortid, 'cohortid1'=>$cohortid);
-    $fields = 'SELECT u.id, username, email, firstname, lastname ';
+    $fields = 'SELECT u.id, u.auth, username, email, firstname, lastname ';
 
     $sql = " FROM {user} u
              INNER JOIN {cohort_members} cm ON (cm.userid = u.id AND cm.cohortid = :cohortid)
