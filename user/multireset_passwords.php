@@ -59,7 +59,7 @@ if ($cohorts_to_reset = $multireset_form->get_data()) {
         $user_table = new html_table();
         $user_table->head = array('First Name', 'Last Name', 'Email', 'Login', 'Password');
         $html_data = array();
-        foreach(cohort_get_members($cohortid)) as $userid=>$userinfo) {
+        foreach(cohort_get_members($cohortid) as $userid=>$userinfo) {
             array_push($html_data, array($userinfo->firstname,
                                          $userinfo->lastname,
                                          $userinfo->email,
