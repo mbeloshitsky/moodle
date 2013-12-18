@@ -73,7 +73,9 @@ if ($cohorts_to_reset = $multireset_form->get_data()) {
         }
         $user_table->data = $html_data;
 
+        echo '<center>';
         echo html_writer::table($user_table);
+        echo '</center>';
     }
 } else {
     $multireset_form->display();
