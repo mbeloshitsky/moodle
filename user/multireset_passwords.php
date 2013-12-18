@@ -62,6 +62,8 @@ $multireset_form = new multireset_password_form();
 
 echo $OUTPUT->header();
 
+require_capability('moodle/user:create', $context);
+
 if ($cohorts_to_reset = $multireset_form->get_data()) {
     foreach ($cohorts_to_reset->cohorts as $cohortid) {
         echo $OUTPUT->heading(cohort_get_name($cohortid));
