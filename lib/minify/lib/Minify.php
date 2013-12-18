@@ -231,7 +231,7 @@ class Minify {
         }
         
         // check client cache
-        require_once 'HTTP/ConditionalGet.php';
+        //require_once 'HTTP/ConditionalGet.php';
         $cgOptions = array(
             'lastModifiedTime' => self::$_options['lastModifiedTime']
             ,'isPublic' => self::$_options['isPublic']

@@ -376,7 +376,7 @@ function css_minify_css($files) {
     );
 
     $error = 'unknown';
-    try {
+    /* try {
         $result = Minify::serve('Files', $options);
         if ($result['success'] and $result['statusCode'] == 200) {
             return $result['content'];
@@ -385,7 +385,7 @@ function css_minify_css($files) {
         $error = $e->getMessage();
         $error = str_replace("\r", ' ', $error);
         $error = str_replace("\n", ' ', $error);
-    }
+    } */
 
     // minification failed - try to inform the theme developer and include the non-minified version
     $css = <<<EOD

@@ -103,13 +103,14 @@ class auth_plugin_email extends auth_plugin_base {
         }
 
         if ($notify) {
-            global $CFG, $PAGE, $OUTPUT;
+	    global $CFG, $PAGE, $OUTPUT;
             $emailconfirm = get_string('emailconfirm');
             $PAGE->navbar->add($emailconfirm);
             $PAGE->set_title($emailconfirm);
-            $PAGE->set_heading($PAGE->course->fullname);
-            echo $OUTPUT->header();
-            notice(get_string('emailconfirmsent', '', $user->email), "$CFG->wwwroot/index.php");
+	    $PAGE->set_heading($PAGE->course->fullname);
+	    echo $OUTPUT->header();
+
+	    notice(get_string('emailconfirmsent', '', $user->email), "$CFG->wwwroot/index.php"); 
         } else {
             return true;
         }

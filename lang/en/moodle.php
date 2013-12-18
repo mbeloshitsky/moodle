@@ -1861,3 +1861,29 @@ $string['yourself'] = 'yourself';
 $string['yourteacher'] = 'your {$a}';
 $string['yourwordforx'] = 'Your word for \'{$a}\'';
 $string['zippingbackup'] = 'Zipping backup';
+
+$string['filial'] = 'Отделение ВУЗа';
+$string['selectafilial'] = 'Выберите отделение';
+$string['missingfilial'] = 'Не выбрано отделение';
+
+$string['direction'] = 'Специальность';
+$string['selectadirection'] = 'Выберите специальность';
+$string['missingdirection'] = 'Не выбрана специальность';
+
+$string['speciality'] = 'Специализация';
+$string['selectaspeciality'] = 'Выберите специализацию';
+$string['missingspeciality'] = 'Не выбрана специализация';
+
+$string['learnform'] = 'Форма обучения';
+$string['selectalearnform'] = 'Выберите форму обучения';
+$string['missinglearnform'] = 'Не выбрана форма обучения';
+
+
+$string['fio'] = 'Фамилия Имя Отчество';
+$string['selectafio'] = 'Выберите ваше ФИО';
+$string['missingfio'] = 'Не заполнены фамилия имя и отчество';
+$string['manualfio'] = '<Ввести ФИО вручную>';
+
+$string['cohstream'] = 'Поток';
+$string['missingcohstream'] = 'Не выбран поток';
+$string['cohstreamnote'] = 'Поле "Поток" заполняется по указанию преподавателя';

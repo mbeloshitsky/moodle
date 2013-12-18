@@ -31,12 +31,58 @@ require_once($CFG->dirroot.'/user/profile/lib.php');
 
 class login_signup_form extends moodleform {
     function definition() {
-        global $USER, $CFG;
+        global $USER, $CFG, $DB;
 
         $mform = $this->_form;
 
-        $mform->addElement('header', 'createuserandpass', get_string('createuserandpass'), '');
 
+        $mform->addElement('header', 'supplyinfo', get_string('supplyinfo'),'');
+
+	$filials = array(null=>get_string('selectafilial'));
+	$filials_db = $DB->get_records('abit_filials');
+	foreach($filials_db as $frow) {
+		$filials[$frow->id] = $frow->name;
+	}
+        $mform->addElement('ajaxselect', 'filial', get_string('filial'), $filials);
+        $mform->addRule('filial', get_string('missingfilial'), 'required', null, 'server');
+
+        $mform->addElement('ajaxselect', 'direction', get_string('direction'), array(null=>get_string('selectadirection')));
+	$mform->addRule('direction', get_string('missingdirection'), 'required', null, 'server');
+
+        $mform->addElement('ajaxselect', 'speciality', get_string('speciality'), array(null=>get_string('selectaspeciality')));
+	$mform->addRule('speciality', get_string('missingspeciality'), 'required', null, 'server');
+
+	$mform->addElement('ajaxselect', 'learnform', get_string('learnform'), array(null=>get_string('selectalearnform')));
+	$mform->addRule('learnform', get_string('missinglearnform'), 'required', null, 'server');
+
+	$cohorts = array(
+        null => "Выберите поток",
+		"ИЯ2013.ЭК" => "ЭК",
+		"ИЯ2013.Мт" => "Мт",
+		"ИЯ2013.УП" => "УП",
+		"ИЯ2013.ИБ,ИТ,МП,СО,СОэ" => "ИБ,ИТ,МП,СО,СОэ",
+		"ИЯ2013.СТг,СЖД,ТП" => "СТг,СЖД,ТП",
+		"ИЯ2013.ТБ,Эма,С,ПС,ПСв" => "ТБ,Эма,С,ПС,ПСв",
+		"ИЯ2013.ЭД,ЭЭ" => "ЭД,ЭЭ",	
+		"ИЯ2013.КИЖТ-ВПО" => "КИЖТ - ВПО",	
+		"ИЯ2013.КИЖТ-СПО" => "КИЖТ - СПО"	
+	);
+
+	$mform->addElement('select', 'cohstream', get_string('cohstream'), $cohorts);
+        $mform->addRule('cohstream', get_string('missingcohstream'), 'required', null, 'server');
+        $mform->addElement('static', 'cohstreamnote', '', get_string('cohstreamnote'));
+
+	$mform->addElement('ajaxselect', 'fio', get_string('fio'), array(null=>get_string('selectafio'),-1=>get_string('manualfio')));
+        $mform->addRule('fio', get_string('missingfio'), 'required', null, 'server');
+
+        $mform->addElement('text', 'manualfio', get_string('fio'), 'maxlength="100" size="70"');
+        $mform->setType('manualfio', PARAM_NOTAGS);
+
+        $mform->addElement('text', 'email', get_string('email'), 'maxlength="100" size="25"');
+        $mform->setType('email', PARAM_NOTAGS);
+
+
+        $mform->addElement('header', 'createuserandpass', get_string('createuserandpass'), '');
 
         $mform->addElement('text', 'username', get_string('username'), 'maxlength="100" size="12"');
         $mform->setType('username', PARAM_NOTAGS);
@@ -49,58 +95,12 @@ class login_signup_form extends moodleform {
         $mform->setType('password', PARAM_RAW);
         $mform->addRule('password', get_string('missingpassword'), 'required', null, 'server');
 
-        $mform->addElement('header', 'supplyinfo', get_string('supplyinfo'),'');
-
-        $mform->addElement('text', 'email', get_string('email'), 'maxlength="100" size="25"');
-        $mform->setType('email', PARAM_NOTAGS);
-        $mform->addRule('email', get_string('missingemail'), 'required', null, 'server');
-
-        $mform->addElement('text', 'email2', get_string('emailagain'), 'maxlength="100" size="25"');
-        $mform->setType('email2', PARAM_NOTAGS);
-        $mform->addRule('email2', get_string('missingemail'), 'required', null, 'server');
-
-        $nameordercheck = new stdClass();
-        $nameordercheck->firstname = 'a';
-        $nameordercheck->lastname  = 'b';
-        if (fullname($nameordercheck) == 'b a' ) {  // See MDL-4325
-            $mform->addElement('text', 'lastname',  get_string('lastname'),  'maxlength="100" size="30"');
-            $mform->addElement('text', 'firstname', get_string('firstname'), 'maxlength="100" size="30"');
-        } else {
-            $mform->addElement('text', 'firstname', get_string('firstname'), 'maxlength="100" size="30"');
-            $mform->addElement('text', 'lastname',  get_string('lastname'),  'maxlength="100" size="30"');
-        }
-
-        $mform->setType('firstname', PARAM_TEXT);
-        $mform->addRule('firstname', get_string('missingfirstname'), 'required', null, 'server');
-
-        $mform->setType('lastname', PARAM_TEXT);
-        $mform->addRule('lastname', get_string('missinglastname'), 'required', null, 'server');
-
-        $mform->addElement('text', 'city', get_string('city'), 'maxlength="120" size="20"');
-        $mform->setType('city', PARAM_TEXT);
-        $mform->addRule('city', get_string('missingcity'), 'required', null, 'server');
-        if (!empty($CFG->defaultcity)) {
-            $mform->setDefault('city', $CFG->defaultcity);
-        }
-
-        $country = get_string_manager()->get_list_of_countries();
-        $default_country[''] = get_string('selectacountry');
-        $country = array_merge($default_country, $country);
-        $mform->addElement('select', 'country', get_string('country'), $country);
-        $mform->addRule('country', get_string('missingcountry'), 'required', null, 'server');
-
-        if( !empty($CFG->country) ){
-            $mform->setDefault('country', $CFG->country);
-        }else{
-            $mform->setDefault('country', '');
-        }
-
         if ($this->signup_captcha_enabled()) {
             $mform->addElement('recaptcha', 'recaptcha_element', get_string('recaptcha', 'auth'), array('https' => $CFG->loginhttps));
             $mform->addHelpButton('recaptcha_element', 'recaptcha', 'auth');
         }
 
-        profile_signup_fields($mform);
+        // profile_signup_fields($mform);
 
         if (!empty($CFG->sitepolicy)) {
             $mform->addElement('header', 'policyagreement', get_string('policyagreement'), '');
@@ -140,6 +140,10 @@ class login_signup_form extends moodleform {
             }
         }
 
+        if ($data['fio'] == -1 && empty($data['fio'])) {
+                $errors['fio'] = get_string('missingfio');
+        }
+
         //check if user exists in external db
         //TODO: maybe we should check all enabled plugins instead
         if ($authplugin->user_exists($data['username'])) {
@@ -147,23 +151,16 @@ class login_signup_form extends moodleform {
         }
 
 
-        if (! validate_email($data['email'])) {
+        if (!empty($data['email']) && ! validate_email($data['email'])) {
             $errors['email'] = get_string('invalidemail');
 
-        } else if ($DB->record_exists('user', array('email'=>$data['email']))) {
+        } else if (!empty($data['email']) && $DB->record_exists('user', array('email'=>$data['email']))) {
             $errors['email'] = get_string('emailexists').' <a href="forgot_password.php">'.get_string('newpassword').'?</a>';
-        }
-        if (empty($data['email2'])) {
-            $errors['email2'] = get_string('missingemail');
-
-        } else if ($data['email2'] != $data['email']) {
-            $errors['email2'] = get_string('invalidemail');
         }
         if (!isset($errors['email'])) {
             if ($err = email_is_not_allowed($data['email'])) {
                 $errors['email'] = $err;
             }
-
         }
 
         $errmsg = '';

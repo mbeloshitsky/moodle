@@ -130,8 +130,8 @@ function js_minify($files) {
     );
 
     $error = 'unknown';
-    try {
-        $result = Minify::serve('Files', $options);
+    /*try {
+         $result = Minify::serve('Files', $options);
         if ($result['success']) {
             return $result['content'];
         }
@@ -139,7 +139,7 @@ function js_minify($files) {
         $error = $e->getMessage();
         $error = str_replace("\r", ' ', $error);
         $error = str_replace("\n", ' ', $error);
-    }
+    }*/
 
     // minification failed - try to inform the theme developer and include the non-minified version
     $js = <<<EOD

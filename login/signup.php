@@ -25,6 +25,7 @@
  */
 
 require('../config.php');
+require_once $CFG->dirroot.'/cohort/lib.php';
 
 // Try to prevent searching for sites that allow sign-up.
 if (!isset($CFG->additionalhtmlhead)) {
@@ -53,7 +54,13 @@ if ($mform_signup->is_cancelled()) {
     redirect(get_login_url());
 
 } else if ($user = $mform_signup->get_data()) {
-    $user->confirmed   = 0;
+    if ($user->manualfio != '') {
+	    $fio = $user->manualfio;
+    } else { 
+	    $fio = $DB->get_record('abit_students', array('id'=>$user->fio))->name;
+    }
+    list($user->lastname, $user->firstname) = explode(' ', $fio, 2);
+    $user->confirmed   = 1;
     $user->lang        = current_language();
     $user->firstaccess = time();
     $user->timecreated = time();
@@ -61,7 +68,21 @@ if ($mform_signup->is_cancelled()) {
     $user->secret      = random_string(15);
     $user->auth        = $CFG->registerauth;
 
-    $authplugin->user_signup($user, true); // prints notice and link to login/index.php
+    if (empty($user->email)) {
+	$user->email = "email@not.exist";
+    }
+
+    $cohortid = $DB->get_record('cohort', array('name'=>$user->cohstream))->id;
+
+    $authplugin->user_signup($user, false);
+    $user = $DB->get_record('user', array('username'=>$user->username, 'mnethostid'=>$CFG->mnet_localhost_id));
+
+    cohort_add_member($cohortid, $user->id);
+
+    authenticate_user_login($user->username, $user->password);
+    complete_user_login($user);
+    set_moodle_cookie($user->username);
+    redirect("$CFG->wwwroot/index.php");
     exit; //never reached
 }
 
@@ -77,7 +98,9 @@ $PAGE->navbar->add($newaccount);
 
 $PAGE->set_title($newaccount);
 $PAGE->set_heading($SITE->fullname);
+$PAGE->requires->js( new moodle_url($CFG->wwwroot . '/login/ajax_signup.js') );
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading('[ <strong>Для первокурсников</strong> / <a href="/login/signup1.php">Для студентов 3, 4, 5 и 6 курсов</a>]',3);
 $mform_signup->display();
 echo $OUTPUT->footer();

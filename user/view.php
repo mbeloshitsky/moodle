@@ -28,6 +28,26 @@ require_once($CFG->dirroot.'/user/profile/lib.php');
 require_once($CFG->dirroot.'/tag/lib.php');
 require_once($CFG->libdir . '/filelib.php');
 
+require_once("$CFG->libdir/formslib.php");
+
+class simplepasswordreset_form extends moodleform {
+    //Add elements to form
+    public function definition() {
+        global $CFG;
+ 
+        $mform = $this->_form; // Don't forget the underscore! 
+ 
+        $mform->addElement('text', 'password', get_string('password')); // Add elements to your form
+        $mform->setType('password', PARAM_NOTAGS);                   //Set type of element
+
+	$this->add_action_buttons();
+    }
+    //Custom validation should be added here
+    function validation($data, $files) {
+        return array();
+    }
+}
+
 $id        = optional_param('id', 0, PARAM_INT);   // user id
 $courseid  = optional_param('course', SITEID, PARAM_INT);   // course id (defaults to Site)
 
@@ -336,7 +356,19 @@ if (!isset($hiddenfields['suspended'])) {
         echo html_writer::tag('dd', get_string('suspended', 'auth'));
     }
 }
+
+if(has_capability('enrol/manual:enrol', $coursecontext)) {
+	echo html_writer::tag('dt', "Login");
+	echo html_writer::tag('dd', $user->username);
+}
+
 echo html_writer::end_tag('dl');
+
+if (has_capability('enrol/manual:enrol', $coursecontext)) {
+	$mform = new simplepasswordreset_form();
+	$mform->display();
+}
+
 echo "</div></div>"; // Closing desriptionbox and userprofilebox.
 // Print messaging link if allowed
 if (isloggedin() && has_capability('moodle/site:sendmessage', $usercontext)
