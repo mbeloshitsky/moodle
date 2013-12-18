@@ -84,7 +84,7 @@ if ($fromform = $mform->get_data()) {
                 foreach ($studentgrades[$member->id] as $gid => $gvalue) {
                     if ($gradestring != '')
                         $gradestring .= ' - ';
-		    if(!empty($gvalue->finalgrade)
+		    if(!empty($gvalue->finalgrade))
 	                $gradestring .= $gvalue->finalgrade;
                 }
                 echo '<span id="'.$member->id.'"><a class="moveup" href="javascript:">↑</a> <a class="movedown" href="javascript:">↓</a> '.fullname($member).' - '.$students[$member->id].' ('.$gradestring.')<br /></span>';
