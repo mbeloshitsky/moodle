@@ -10,6 +10,10 @@ require_once($CFG->dirroot.'/cohort/lib.php');
 
 $context = context_system::instance();
 
+function GetPassword($passwordLength=8)
+{
+    return substr(base64_encode(crypt(microtime())),rand(1,45-$passwordLength),$passwordLength);
+}
 
 function cohort_get_members($cohortid) {
     global $DB;
@@ -65,7 +69,7 @@ if ($cohorts_to_reset = $multireset_form->get_data()) {
         $user_table->head = array('First Name', 'Last Name', 'Email', 'Login', 'Password');
         $html_data = array();
         foreach(cohort_get_members($cohortid) as $userid=>$userinfo) {
-            $newpass = '123456';
+            $newpass = GetPassword();
             $authplugin = get_auth_plugin($userinfo->auth);
             $authplugin->user_update_password($userinfo, $newpass);
             array_push($html_data, array($userinfo->firstname,
