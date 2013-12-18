@@ -10,6 +10,20 @@ require_once($CFG->dirroot.'/cohort/lib.php');
 
 $context = context_system::instance();
 
+
+function cohort_get_members($cohortid) {
+    global $DB;
+
+    $params = array('cohortid'=>$cohortid);
+    $fields = 'SELECT id, username, email, firstname, lastname ' . $this->required_fields_sql('u');
+
+    $sql = " FROM {user} u
+             LEFT JOIN {cohort_members} cm ON (cm.userid = u.id AND cm.cohortid = :cohortid)
+             WHERE cm.id IS NULL";
+
+    return $DB->get_records_sql($fields . $sql, $params);
+}
+
 class multireset_password_form extends moodleform {
 
     function definition() {
@@ -39,8 +53,11 @@ $multireset_form = new multireset_password_form();
 
 echo $OUTPUT->header();
 
-if ($cohorts_to_reset = $userform->get_data()) {
-    echo print_r($cohorts_to_reset);
+if ($cohorts_to_reset = $multireset_form->get_data()) {
+    foreach ($cohorts_to_reset as $cohortid) {
+        echo $OUTPUT->heading($cohortid);
+        echo print_r(cohort_get_members($cohortid));
+    }
 } else {
     $multireset_form->display();
 }
