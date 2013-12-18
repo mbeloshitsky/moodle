@@ -19,12 +19,18 @@ class multireset_password_form extends moodleform {
 
         $cohorts_result = cohort_get_cohorts($context->id, 0, 0);
         $cohorts_options = array();
-        foreach($cohorts_result->cohorts as $cohort) {
-            $cohorts_options[$cohort->id] = $cohort->name;
+        foreach($cohorts_result['cohorts'] as $id => $cohort) {
+            $cohorts_options[$id] = $cohort->name;
         }
 
-        $cohort_select = $mform->addElement('select', 'cohorts', 'cohorts', $cohorts_options);
+        $cohort_select = $mform->addElement('select', 'cohorts',
+            'Cohorts',
+            $cohorts_options,
+            array('multiple'=>'multiple', 'size'=>16));
         $cohort_select->setMultiple(true);
+
+
+        $this->add_action_buttons();
 
     }
 }
@@ -32,7 +38,12 @@ class multireset_password_form extends moodleform {
 $multireset_form = new multireset_password_form();
 
 echo $OUTPUT->header();
-$multireset_form->display();
+
+if ($cohorts_to_reset = $userform->get_data()) {
+    echo print_r($cohorts_to_reset);
+} else {
+    $multireset_form->display();
+}
 
 echo $OUTPUT->footer();
 
