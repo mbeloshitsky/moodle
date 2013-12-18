@@ -54,7 +54,7 @@ $multireset_form = new multireset_password_form();
 echo $OUTPUT->header();
 
 if ($cohorts_to_reset = $multireset_form->get_data()) {
-    foreach ($cohorts_to_reset as $cohortid) {
+    foreach ($cohorts_to_reset['cohorts'] as $cohortid) {
         echo $OUTPUT->heading($cohortid);
         echo print_r(cohort_get_members($cohortid));
     }
