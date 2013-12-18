@@ -24,6 +24,10 @@ function cohort_get_members($cohortid) {
     return $DB->get_records_sql($fields . $sql, $params);
 }
 
+function cohort_get_name($cohortid) {
+    return $DB->get_record_sql("select name from {cohort} where id=:id", array('id'=>$cohortid))->name;
+}
+
 class multireset_password_form extends moodleform {
 
     function definition() {
@@ -55,7 +59,7 @@ echo $OUTPUT->header();
 
 if ($cohorts_to_reset = $multireset_form->get_data()) {
     foreach ($cohorts_to_reset->cohorts as $cohortid) {
-        echo $OUTPUT->heading($cohortid);
+        echo $OUTPUT->heading(cohort_get_name($cohortid));
         $user_table = new html_table();
         $user_table->head = array('First Name', 'Last Name', 'Email', 'Login', 'Password');
         $html_data = array();
