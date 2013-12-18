@@ -14,12 +14,12 @@ $context = context_system::instance();
 function cohort_get_members($cohortid) {
     global $DB;
 
-    $params = array('cohortid'=>$cohortid);
+    $params = array('cohortid'=>$cohortid, 'cohortid1'=>$cohortid);
     $fields = 'SELECT u.id, username, email, firstname, lastname ';
 
     $sql = " FROM {user} u
-             LEFT JOIN {cohort_members} cm ON (cm.userid = u.id AND cm.cohortid = :cohortid)
-             WHERE cm.id IS NULL";
+             INNER JOIN {cohort_members} cm ON (cm.userid = u.id AND cm.cohortid = :cohortid)
+             WHERE cm.cohortid = :cohortid1";
 
     return $DB->get_records_sql($fields . $sql, $params);
 }
@@ -56,7 +56,19 @@ echo $OUTPUT->header();
 if ($cohorts_to_reset = $multireset_form->get_data()) {
     foreach ($cohorts_to_reset->cohorts as $cohortid) {
         echo $OUTPUT->heading($cohortid);
-        echo print_r(cohort_get_members($cohortid));
+        $user_table = new html_table();
+        $user_table->head = array('First Name', 'Last Name', 'Email', 'Login', 'Password');
+        $html_data = array();
+        foreach(cohort_get_members($cohortid)) as $userid=>$userinfo) {
+            array_push($html_data, array($userinfo->firstname,
+                                         $userinfo->lastname,
+                                         $userinfo->email,
+                                         $userinfo->username,
+                ''));
+        }
+        $user_table->data = $html_data;
+
+        echo html_writer::table($user_table);
     }
 } else {
     $multireset_form->display();
