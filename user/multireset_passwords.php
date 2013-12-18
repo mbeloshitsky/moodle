@@ -65,11 +65,13 @@ if ($cohorts_to_reset = $multireset_form->get_data()) {
         $user_table->head = array('First Name', 'Last Name', 'Email', 'Login', 'Password');
         $html_data = array();
         foreach(cohort_get_members($cohortid) as $userid=>$userinfo) {
+            $newpass = '123456';
+            $authplugin->user_update_password($userinfo, $newpass);
             array_push($html_data, array($userinfo->firstname,
                                          $userinfo->lastname,
                                          $userinfo->email,
                                          $userinfo->username,
-                ''));
+                                         $newpass));
         }
         $user_table->data = $html_data;
 
