@@ -15,7 +15,7 @@ function cohort_get_members($cohortid) {
     global $DB;
 
     $params = array('cohortid'=>$cohortid);
-    $fields = 'SELECT id, username, email, firstname, lastname ' . $this->required_fields_sql('u');
+    $fields = 'SELECT u.id, username, email, firstname, lastname ';
 
     $sql = " FROM {user} u
              LEFT JOIN {cohort_members} cm ON (cm.userid = u.id AND cm.cohortid = :cohortid)
@@ -54,7 +54,7 @@ $multireset_form = new multireset_password_form();
 echo $OUTPUT->header();
 
 if ($cohorts_to_reset = $multireset_form->get_data()) {
-    foreach ($cohorts_to_reset['cohorts'] as $cohortid) {
+    foreach ($cohorts_to_reset->cohorts as $cohortid) {
         echo $OUTPUT->heading($cohortid);
         echo print_r(cohort_get_members($cohortid));
     }
