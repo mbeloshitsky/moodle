@@ -23,7 +23,7 @@ function cohort_get_members($cohortid) {
 
     $sql = " FROM {user} u
              INNER JOIN {cohort_members} cm ON (cm.userid = u.id AND cm.cohortid = :cohortid)
-             WHERE cm.cohortid = :cohortid1";
+             WHERE cm.cohortid = :cohortid1 ORDER BY u.lastname";
 
     return $DB->get_records_sql($fields . $sql, $params);
 }
@@ -68,14 +68,14 @@ if ($cohorts_to_reset = $multireset_form->get_data()) {
     foreach ($cohorts_to_reset->cohorts as $cohortid) {
         echo $OUTPUT->heading(cohort_get_name($cohortid));
         $user_table = new html_table();
-        $user_table->head = array('First Name', 'Last Name', 'Email', 'Login', 'Password');
+        $user_table->head = array('Last Name', 'First Name', 'Email', 'Login', 'Password');
         $html_data = array();
         foreach(cohort_get_members($cohortid) as $userid=>$userinfo) {
             $newpass = GetPassword();
             $authplugin = get_auth_plugin($userinfo->auth);
             $authplugin->user_update_password($userinfo, $newpass);
-            array_push($html_data, array($userinfo->firstname,
-                                         $userinfo->lastname,
+            array_push($html_data, array($userinfo->lastname,
+                                         $userinfo->firstname,
                                          $userinfo->email,
                                          $userinfo->username,
                                          $newpass));
