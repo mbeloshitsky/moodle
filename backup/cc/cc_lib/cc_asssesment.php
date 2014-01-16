@@ -699,25 +699,25 @@ class cc_assignment_conditionvar_varsubstringtype extends cc_assignment_conditio
 
 class cc_assignment_conditionvar_andtype extends cc_question_metadata_base {
     protected $not = null;
-    protected $varequal = null;
+    protected $varequals = array();
 
     public function set_not(cc_assignment_conditionvar_varequaltype $object) {
         $this->not = $object;
     }
 
-    public function set_varequal(cc_assignment_conditionvar_varequaltype $object) {
-        $this->varequal = $object;
+    public function add_varequal(cc_assignment_conditionvar_varequaltype $object, $withnot = false) {
+        $this->varequals[] = array('varequal'=>$object, 'not'=>$withnot);
     }
 
     public function generate(XMLGenericDocument &$doc, DOMNode &$item, $namespace) {
         $node = $doc->append_new_element_ns($item, $namespace, cc_qti_tags::and_);
-        if (!empty($this->not)) {
-            $not = $doc->append_new_element_ns($node, $namespace, cc_qti_tags::not_);
-            $this->not->generate($doc, $not, $namespace);
-        }
-
-        if (!empty($this->varequal)) {
-            $this->varequal->generate($doc, $node, $namespace);
+        foreach ($this->varequals as $i => $vinfo) {
+            $appendnode = $node;
+            if ($vinfo['not']) {
+                $not = $doc->append_new_element_ns($node, $namespace, cc_qti_tags::not_);
+                $appendnode = $not;
+            }
+            $vinfo['varequal']->generate($doc, $appendnode, $namespace);
         }
     }
 }
@@ -842,7 +842,7 @@ class cc_assesment_respconditiontype extends cc_question_metadata_base {
         $this->enable_setting_yesno(cc_qti_tags::continue_, $value);
     }
 
-    public function set_conditionvar(cc_assignment_conditionvar $object) {
+    public function add_conditionvar(cc_assignment_conditionvar $object) {
         $this->conditionvar = $object;
     }
 
@@ -1948,13 +1948,17 @@ abstract class cc_assesment_helper {
             $question_processor = null;
             switch ($qtype) {
                 case 'multichoice':
-                    $single_correct_answer = (int)$questions->nodeValue('plugin_qtype_multichoice_question/multichoice/single', $question_node) > 0;
+                    $question_processor = new cc_assesment_question_multichoice($qdoc, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir);
+                    $question_processor->generate();
+                    /* $single_correct_answer = (int)$questions->nodeValue('plugin_qtype_multichoice_question/multichoice/single', $question_node) > 0;
                     if ($single_correct_answer) {
-                        $question_processor = new cc_assesment_question_multichoice($qdoc, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir);
-                        $question_processor->generate();
                     } else {
                         //TODO: implement
-                    }
+                    } */
+                ;
+                break;
+
+                case 'truefalse':
                 ;
                 break;
 
@@ -2166,21 +2170,8 @@ class cc_assesment_question_proc_base {
 class cc_assesment_question_multichoice extends cc_assesment_question_proc_base {
     public function __construct($quiz, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir) {
         parent::__construct($quiz, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir);
-        $this->qtype = cc_qti_profiletype::multiple_choice;
 
-        /**
-        *
-        * What is needed is a maximum grade value taken from the answer fraction
-        * It is supposed to always be between 1 and 0 in decimal representation,
-        * however that is not always the case so a change in test was needed
-        * but since we support here one correct answer type
-        * correct answer would always have to be 1
-        */
-        $correct_answer_node = $this->questions->node("plugin_qtype_multichoice_question/answers/answer[fraction!=0.0000000]", $this->question_node);
-        if (empty($correct_answer_node)) {
-            throw new RuntimeException('No correct answer!');
-        }
-        $this->correct_answer_node_id = $this->questions->nodeValue('@id', $correct_answer_node);
+        $this->qtype = cc_qti_profiletype::multiple_choice;
         $maximum_quiz_grade = (int)$this->quiz->nodeValue('/activity/quiz/grade');
         $this->total_grade_value = ($maximum_quiz_grade + 1).'.0000000';
     }
@@ -2194,7 +2185,7 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         $qresponse_lid->set_render_choice($qresponse_choice);
         //Mark that question has only one correct answer -
         //which applies for multiple choice and yes/no questions
-        $qresponse_lid->set_rcardinality(cc_qti_values::Single);
+        $qresponse_lid->set_rcardinality(cc_qti_values::Multiple);
         //are we to shuffle the responses?
         $shuffle_answers = (int)$this->quiz->nodeValue('/activity/quiz/shuffleanswers') > 0;
         $qresponse_choice->enable_shuffle($shuffle_answers);
@@ -2202,7 +2193,6 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         $qa_responses = $this->questions->nodeList('plugin_qtype_multichoice_question/answers/answer', $this->question_node);
         foreach ($qa_responses as $node) {
             $answer_content = $this->questions->nodeValue('answertext', $node);
-            $id = ((int)$this->questions->nodeValue('@id', $node) == $this->correct_answer_node_id);
             $result = cc_helpers::process_linked_files( $answer_content,
                                                         $this->manifest,
                                                         $this->rootpath,
@@ -2214,9 +2204,9 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
             pkg_resource_dependencies::instance()->add($result[1]);
             $answer_ident = $qresponse_label->get_ident();
             $feedback_ident = $answer_ident.'_fb';
-            if (empty($this->correct_answer_ident) && $id) {
-                $this->correct_answer_ident = $answer_ident;
-            }
+
+            $answerlist[$answer_ident] = array('fraction'=>intval($this->questions->nodeValue('fraction', $node)*100));
+
             //add answer specific feedbacks if not empty
             $content = $this->questions->nodeValue('feedback', $node);
             if (!empty($content)) {
@@ -2234,7 +2224,7 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
 
                 pkg_resource_dependencies::instance()->add($result[1]);
 
-                $answerlist[$answer_ident] = $feedback_ident;
+                $answerlist[$answer_ident]['fbid'] = $feedback_ident;
             }
         }
 
@@ -2288,7 +2278,7 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
             $qrespcondition->enable_continue();
             //define the condition for success
             $qconditionvar = new cc_assignment_conditionvar();
-            $qrespcondition->set_conditionvar($qconditionvar);
+            $qrespcondition->add_conditionvar($qconditionvar);
             $qother = new cc_assignment_conditionvar_othertype();
             $qconditionvar->set_other($qother);
             $qdisplayfeedback = new cc_assignment_displayfeedbacktype();
@@ -2298,52 +2288,30 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         }
 
         //success condition
-        /**
-         * For all question types outside of the Essay question, scoring is done in a
-         * single <respcondition> with a continue flag set to No. The outcome is always
-         * a variable named SCORE which value must be set to 100 in case of correct answer.
-         * Partial scores (not 0 or 100) are not supported.
-         */
+        /* Generating correct answer formula */
         $qrespcondition = new cc_assesment_respconditiontype();
-        $qrespcondition->set_title('Correct');
         $this->qresprocessing->add_respcondition($qrespcondition);
-        $qrespcondition->enable_continue(false);
+        $qconditionvar = new cc_assignment_conditionvar();
+        $qrespcondition->add_conditionvar($qconditionvar);
+        $andcondvars = new cc_assignment_conditionvar_andtype();
+        $qconditionvar->set_and($andcondvars);
+        foreach ($this->answerlist as $ident => $answerinfo) {
+            $qvarequal = new cc_assignment_conditionvar_varequaltype($ident);
+            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] == 0.0);
+            $qvarequal->set_respident($this->qresponse_lid->get_ident());
+        }
         $qsetvar = new cc_assignment_setvartype(100);
         $qrespcondition->add_setvar($qsetvar);
-        //define the condition for success
-        $qconditionvar = new cc_assignment_conditionvar();
-        $qrespcondition->set_conditionvar($qconditionvar);
-        $qvarequal = new cc_assignment_conditionvar_varequaltype($this->correct_answer_ident);
-        $qconditionvar->set_varequal($qvarequal);
-        $qvarequal->set_respident($this->qresponse_lid->get_ident());
-
-        if (array_key_exists($this->correct_answer_ident, $this->answerlist)) {
-            $qdisplayfeedback = new cc_assignment_displayfeedbacktype();
-            $qrespcondition->add_displayfeedback($qdisplayfeedback);
-            $qdisplayfeedback->set_feedbacktype(cc_qti_values::Response);
-            $qdisplayfeedback->set_linkrefid($this->answerlist[$this->correct_answer_ident]);
-        }
-
-        foreach ($this->correct_feedbacks as $ident) {
-            $qdisplayfeedback = new cc_assignment_displayfeedbacktype();
-            $qrespcondition->add_displayfeedback($qdisplayfeedback);
-            $qdisplayfeedback->set_feedbacktype(cc_qti_values::Response);
-            $qdisplayfeedback->set_linkrefid($ident);
-        }
 
         //rest of the conditions
-        foreach ($this->answerlist as $ident => $refid) {
-            if ($ident == $this->correct_answer_ident) {
-                continue;
-            }
+        foreach ($this->answerlist as $ident => $answerinfo) {
 
+            $refid = $answerinfo['fbid'];
             $qrespcondition = new cc_assesment_respconditiontype();
             $this->qresprocessing->add_respcondition($qrespcondition);
-            $qsetvar = new cc_assignment_setvartype(0);
-            $qrespcondition->add_setvar($qsetvar);
             //define the condition for fail
             $qconditionvar = new cc_assignment_conditionvar();
-            $qrespcondition->set_conditionvar($qconditionvar);
+            $qrespcondition->add_conditionvar($qconditionvar);
             $qvarequal = new cc_assignment_conditionvar_varequaltype($ident);
             $qconditionvar->set_varequal($qvarequal);
             $qvarequal->set_respident($this->qresponse_lid->get_ident());
