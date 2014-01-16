@@ -2304,7 +2304,7 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         $qrespcondition->add_setvar($qsetvar);
 
         //rest of the conditions
-        foreach ($this->answerlist as $ident => $answerinfo) {
+        /* foreach ($this->answerlist as $ident => $answerinfo) {
 
             $refid = $answerinfo['fbid'];
             $qrespcondition = new cc_assesment_respconditiontype();
@@ -2327,6 +2327,6 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
                 $qdisplayfeedback->set_feedbacktype(cc_qti_values::Response);
                 $qdisplayfeedback->set_linkrefid($ident);
             }
-        }
+        } */
     }
 }
