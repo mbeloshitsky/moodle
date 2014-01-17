@@ -1950,16 +1950,11 @@ abstract class cc_assesment_helper {
                 case 'multichoice':
                     $question_processor = new cc_assesment_question_multichoice($qdoc, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir);
                     $question_processor->generate();
-                    /* $single_correct_answer = (int)$questions->nodeValue('plugin_qtype_multichoice_question/multichoice/single', $question_node) > 0;
-                    if ($single_correct_answer) {
-                    } else {
-                        //TODO: implement
-                    } */
-                ;
                 break;
 
                 case 'truefalse':
-                ;
+                    $question_processor = new cc_assesment_question_truefalse($qdoc, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir);
+                    $question_processor->generate();
                 break;
 
                 default:
@@ -2185,7 +2180,9 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         $qresponse_lid->set_render_choice($qresponse_choice);
         //Mark that question has only one correct answer -
         //which applies for multiple choice and yes/no questions
-        $qresponse_lid->set_rcardinality(cc_qti_values::Multiple);
+        $is_single = (int)$this->questions->nodeList('plugin_qtype_multichoice_question/multichoice/single', $this->question_node);;
+        $qresponse_lid->set_rcardinality($is_single ? cc_qti_values::Single : cc_qti_values::Multiple);
+
         //are we to shuffle the responses?
         $shuffle_answers = (int)$this->quiz->nodeValue('/activity/quiz/shuffleanswers') > 0;
         $qresponse_choice->enable_shuffle($shuffle_answers);
@@ -2252,6 +2249,171 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
                                                $result[0],
                                                cc_qti_values::htmltype,
                                                $ident);
+
+            pkg_resource_dependencies::instance()->add($result[1]);
+            if ($ident == 'correct_fb') {
+                $this->correct_feedbacks[] = $ident;
+            } else {
+                $this->incorrect_feedbacks[] = $ident;
+            }
+        }
+
+    }
+
+    public function on_generate_response_processing() {
+        parent::on_generate_response_processing();
+
+        //respconditions
+        /**
+         * General unconditional feedback must be added as a first respcondition
+         * without any condition and just displayfeedback (if exists)
+         */
+        if (!empty($this->general_feedback)) {
+            $qrespcondition = new cc_assesment_respconditiontype();
+            $qrespcondition->set_title('General feedback');
+            $this->qresprocessing->add_respcondition($qrespcondition);
+            $qrespcondition->enable_continue();
+            //define the condition for success
+            $qconditionvar = new cc_assignment_conditionvar();
+            $qrespcondition->add_conditionvar($qconditionvar);
+            $qother = new cc_assignment_conditionvar_othertype();
+            $qconditionvar->set_other($qother);
+            $qdisplayfeedback = new cc_assignment_displayfeedbacktype();
+            $qrespcondition->add_displayfeedback($qdisplayfeedback);
+            $qdisplayfeedback->set_feedbacktype(cc_qti_values::Response);
+            $qdisplayfeedback->set_linkrefid('general_fb');
+        }
+
+        //success condition
+        /* Generating correct answer formula */
+        $qrespcondition = new cc_assesment_respconditiontype();
+        $this->qresprocessing->add_respcondition($qrespcondition);
+        $qconditionvar = new cc_assignment_conditionvar();
+        $qrespcondition->add_conditionvar($qconditionvar);
+        $andcondvars = new cc_assignment_conditionvar_andtype();
+        $qconditionvar->set_and($andcondvars);
+        foreach ($this->answerlist as $ident => $answerinfo) {
+            $qvarequal = new cc_assignment_conditionvar_varequaltype($ident);
+            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] >= 0.0);
+            $qvarequal->set_respident($this->qresponse_lid->get_ident());
+        }
+        $qsetvar = new cc_assignment_setvartype(100);
+        $qrespcondition->add_setvar($qsetvar);
+
+        //rest of the conditions
+        /* foreach ($this->answerlist as $ident => $answerinfo) {
+
+            $refid = $answerinfo['fbid'];
+            $qrespcondition = new cc_assesment_respconditiontype();
+            $this->qresprocessing->add_respcondition($qrespcondition);
+            //define the condition for fail
+            $qconditionvar = new cc_assignment_conditionvar();
+            $qrespcondition->add_conditionvar($qconditionvar);
+            $qvarequal = new cc_assignment_conditionvar_varequaltype($ident);
+            $qconditionvar->set_varequal($qvarequal);
+            $qvarequal->set_respident($this->qresponse_lid->get_ident());
+
+            $qdisplayfeedback = new cc_assignment_displayfeedbacktype();
+            $qrespcondition->add_displayfeedback($qdisplayfeedback);
+            $qdisplayfeedback->set_feedbacktype(cc_qti_values::Response);
+            $qdisplayfeedback->set_linkrefid($refid);
+
+            foreach ($this->incorrect_feedbacks as $ident) {
+                $qdisplayfeedback = new cc_assignment_displayfeedbacktype();
+                $qrespcondition->add_displayfeedback($qdisplayfeedback);
+                $qdisplayfeedback->set_feedbacktype(cc_qti_values::Response);
+                $qdisplayfeedback->set_linkrefid($ident);
+            }
+        } */
+    }
+}
+
+class cc_assesment_question_truefalse extends cc_assesment_question_proc_base {
+    public function __construct($quiz, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir) {
+        parent::__construct($quiz, $questions, $manifest, $section, $question_node, $rootpath, $contextid, $outdir);
+
+        $this->qtype = cc_qti_profiletype::true_false;
+        $maximum_quiz_grade = (int)$this->quiz->nodeValue('/activity/quiz/grade');
+        $this->total_grade_value = ($maximum_quiz_grade + 1).'.0000000';
+    }
+
+    public function on_generate_answers() {
+        //add responses holder
+        $qresponse_lid = new cc_response_lidtype();
+        $this->qresponse_lid = $qresponse_lid;
+        $this->qpresentation->set_response_lid($qresponse_lid);
+        $qresponse_choice = new cc_assesment_render_choicetype();
+        $qresponse_lid->set_render_choice($qresponse_choice);
+        //Mark that question has only one correct answer -
+        //which applies for multiple choice and yes/no questions
+        $qresponse_lid->set_rcardinality(cc_qti_values::Single);
+
+        //are we to shuffle the responses?
+        $shuffle_answers = (int)$this->quiz->nodeValue('/activity/quiz/shuffleanswers') > 0;
+        $qresponse_choice->enable_shuffle($shuffle_answers);
+        $answerlist = array();
+        $qa_responses = $this->questions->nodeList('plugin_qtype_truefalse_question/answers/answer', $this->question_node);
+        foreach ($qa_responses as $node) {
+            $answer_content = $this->questions->nodeValue('answertext', $node);
+            $result = cc_helpers::process_linked_files( $answer_content,
+                $this->manifest,
+                $this->rootpath,
+                $this->contextid,
+                $this->outdir);
+            $qresponse_label = cc_assesment_helper::add_answer( $qresponse_choice,
+                $result[0],
+                cc_qti_values::htmltype);
+            pkg_resource_dependencies::instance()->add($result[1]);
+            $answer_ident = $qresponse_label->get_ident();
+            $feedback_ident = $answer_ident.'_fb';
+
+            $answerlist[$answer_ident] = array('fraction'=>intval($this->questions->nodeValue('fraction', $node)*100));
+
+            //add answer specific feedbacks if not empty
+            $content = $this->questions->nodeValue('feedback', $node);
+            if (!empty($content)) {
+                $result = cc_helpers::process_linked_files( $content,
+                    $this->manifest,
+                    $this->rootpath,
+                    $this->contextid,
+                    $this->outdir);
+
+
+                cc_assesment_helper::add_feedback( $this->qitem,
+                    $result[0],
+                    cc_qti_values::htmltype,
+                    $feedback_ident);
+
+                pkg_resource_dependencies::instance()->add($result[1]);
+
+                $answerlist[$answer_ident]['fbid'] = $feedback_ident;
+            }
+        }
+
+        $this->answerlist = $answerlist;
+
+    }
+
+    public function on_generate_feedbacks() {
+        parent::on_generate_feedbacks();
+        //Question combined feedbacks
+        $correct_question_fb = $this->questions->nodeValue('plugin_qtype_truefalse_question/multichoice/correctfeedback', $this->question_node);
+        $incorrect_question_fb = $this->questions->nodeValue('plugin_qtype_truefalse_question/multichoice/incorrectfeedback', $this->question_node);
+        $proc = array('correct_fb' => $correct_question_fb, 'general_incorrect_fb' => $incorrect_question_fb);
+        foreach ($proc as $ident => $content) {
+            if (empty($content)) {
+                continue;
+            }
+            $result = cc_helpers::process_linked_files( $content,
+                $this->manifest,
+                $this->rootpath,
+                $this->contextid,
+                $this->outdir);
+
+            cc_assesment_helper::add_feedback( $this->qitem,
+                $result[0],
+                cc_qti_values::htmltype,
+                $ident);
 
             pkg_resource_dependencies::instance()->add($result[1]);
             if ($ident == 'correct_fb') {
