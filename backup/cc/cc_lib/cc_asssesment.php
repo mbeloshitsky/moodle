@@ -2297,7 +2297,7 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         $qconditionvar->set_and($andcondvars);
         foreach ($this->answerlist as $ident => $answerinfo) {
             $qvarequal = new cc_assignment_conditionvar_varequaltype($ident);
-            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] == 0.0);
+            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] >= 0.0);
             $qvarequal->set_respident($this->qresponse_lid->get_ident());
         }
         $qsetvar = new cc_assignment_setvartype(100);
