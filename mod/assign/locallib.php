@@ -1643,9 +1643,10 @@ class assign {
         global $DB;
 
         $flags = $this->get_user_flags($grade->userid, true);
-        if ($flags->mailed != 1) {
+        $flags->mailed = 0;
+        /* if ($flags->mailed != 1) {
             $flags->mailed = 0;
-        }
+        } */
 
         return $this->update_user_flags($flags);
     }
