@@ -2180,8 +2180,8 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         $qresponse_lid->set_render_choice($qresponse_choice);
         //Mark that question has only one correct answer -
         //which applies for multiple choice and yes/no questions
-        $is_single = (int)$this->questions->nodeList('plugin_qtype_multichoice_question/multichoice/single', $this->question_node);;
-        $qresponse_lid->set_rcardinality($is_single ? cc_qti_values::Single : cc_qti_values::Multiple);
+        $is_single = intval($this->questions->nodeValue('plugin_qtype_multichoice_question/multichoice/single', $this->question_node));
+        $qresponse_lid->set_rcardinality(cc_qti_values::Multiple); //$is_single == 1 ? cc_qti_values::Multiple : cc_qti_values::Single);
 
         //are we to shuffle the responses?
         $shuffle_answers = (int)$this->quiz->nodeValue('/activity/quiz/shuffleanswers') > 0;
@@ -2202,7 +2202,7 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
             $answer_ident = $qresponse_label->get_ident();
             $feedback_ident = $answer_ident.'_fb';
 
-            $answerlist[$answer_ident] = array('fraction'=>intval($this->questions->nodeValue('fraction', $node)*100));
+            $answerlist[$answer_ident] = array('fraction'=>floatval($this->questions->nodeValue('fraction', $node)));
 
             //add answer specific feedbacks if not empty
             $content = $this->questions->nodeValue('feedback', $node);
@@ -2294,7 +2294,7 @@ class cc_assesment_question_multichoice extends cc_assesment_question_proc_base 
         $qconditionvar->set_and($andcondvars);
         foreach ($this->answerlist as $ident => $answerinfo) {
             $qvarequal = new cc_assignment_conditionvar_varequaltype($ident);
-            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] >= 0.0);
+            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] <= 0.0);
             $qvarequal->set_respident($this->qresponse_lid->get_ident());
         }
         $qsetvar = new cc_assignment_setvartype(100);
@@ -2367,7 +2367,7 @@ class cc_assesment_question_truefalse extends cc_assesment_question_proc_base {
             $answer_ident = $qresponse_label->get_ident();
             $feedback_ident = $answer_ident.'_fb';
 
-            $answerlist[$answer_ident] = array('fraction'=>intval($this->questions->nodeValue('fraction', $node)*100));
+            $answerlist[$answer_ident] = array('fraction'=>floatval($this->questions->nodeValue('fraction', $node)));
 
             //add answer specific feedbacks if not empty
             $content = $this->questions->nodeValue('feedback', $node);
@@ -2451,6 +2451,7 @@ class cc_assesment_question_truefalse extends cc_assesment_question_proc_base {
 
         //success condition
         /* Generating correct answer formula */
+
         $qrespcondition = new cc_assesment_respconditiontype();
         $this->qresprocessing->add_respcondition($qrespcondition);
         $qconditionvar = new cc_assignment_conditionvar();
@@ -2459,7 +2460,7 @@ class cc_assesment_question_truefalse extends cc_assesment_question_proc_base {
         $qconditionvar->set_and($andcondvars);
         foreach ($this->answerlist as $ident => $answerinfo) {
             $qvarequal = new cc_assignment_conditionvar_varequaltype($ident);
-            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] >= 0.0);
+            $andcondvars->add_varequal($qvarequal, $answerinfo['fraction'] <= 0.0);
             $qvarequal->set_respident($this->qresponse_lid->get_ident());
         }
         $qsetvar = new cc_assignment_setvartype(100);
