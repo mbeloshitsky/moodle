@@ -51,7 +51,6 @@ class cc_converter_resource extends cc_converter {
         $resitem->identifierref = $resvalue;
         $resitem->title = $title;
         $this->item->add_child_item($resitem);
-
         return true;
     }
 

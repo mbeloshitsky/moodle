@@ -262,9 +262,9 @@ class cc_manifest extends XMLGenericDocument implements cc_i_manifest {
             $nresnode   = null;
 
             $rst->type = $type;
-            if (!cc_helpers::is_html($rst->filename)) {
+            /*if (!cc_helpers::is_html($rst->filename)) {
                 $rst->href = null;
-            }
+            }*/
             $this->activemanifest->create_resource_node($rst,$this->doc,$nresnode);
 
 
@@ -273,9 +273,9 @@ class cc_manifest extends XMLGenericDocument implements cc_i_manifest {
                 if(empty($ident)){
                     $newres = new cc_resource($rst->manifestroot,$rst->files[$i],false);
                     if (!empty($newres)) {
-                        if (!cc_helpers::is_html($rst->files[$i])) {
+                        /*if (!cc_helpers::is_html($rst->files[$i])) {
                              $newres->href = null;
-                        }
+                        }*/
                         $newres->type = 'webcontent';
                         $this->activemanifest->create_resource_node($newres,$this->doc,$nresnode);
                     }

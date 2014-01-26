@@ -89,6 +89,7 @@ abstract class cc_convert_moodle2 {
                 if (!empty($section_list)) {
                     $count = 0;
                     foreach ($section_list as $node) {
+
                         //if ($count > $numsections) {
                         //    break;
                         //}
@@ -107,8 +108,9 @@ abstract class cc_convert_moodle2 {
                             if ($rawvalue != '$@NULL@$') {
                                 $sequence = explode(',', $rawvalue);
                             }
+                            $sec_summary = $secp->nodeValue('/section/summary');
                         }
-                        $sections[$sectionid] = array($sectiontitle, $sequence);
+                        $sections[$sectionid] = array($sectiontitle, $sequence, $sec_summary);
                         $count++;
                     }
                 }
