@@ -43,6 +43,7 @@ abstract class backup implements checksumable {
     const FORMAT_MOODLE1 = 'moodle1';
     const FORMAT_IMSCC1  = 'imscc1';
     const FORMAT_IMSCC11 = 'imscc11';
+    const FORMAT_BB      = 'BB';
     const FORMAT_UNKNOWN = 'unknown';
 
     // Interactive
