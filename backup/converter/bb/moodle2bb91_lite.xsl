@@ -9,20 +9,18 @@
     </organization>
     <resources>
       <xsl:for-each select="/files/questions/question_categories/question_category[count(questions/question) > 0]" >
-        <xsl:if test="count(questions/question) > 0">
           <resource type="assessment/x-bb-pool">
             <xsl:attribute name="file">res<xsl:value-of select='format-number(position(), "00000")' />.dat</xsl:attribute>
             <xsl:attribute name="baseurl">res<xsl:value-of select='format-number(position(), "00000")' /></xsl:attribute>
             <xsl:attribute name="identifier">res<xsl:value-of select='format-number(position(), "00000")' /></xsl:attribute>
           </resource>
-        </xsl:if>
       </xsl:for-each>
      </resources>
   </manifest>
   <filestocreate>
 
 <xsl:for-each select="/files/questions/question_categories/question_category[count(questions/question) > 0]" >
-  <xsl:if test="count(questions/question) > 0">
+
     <!-- ******** FILE ******** -->
     <file>
       <xsl:attribute name="name">res<xsl:value-of select='format-number(position(), "00000")' />.dat</xsl:attribute>
@@ -396,7 +394,6 @@
 </POOL>
       
     </file>
- </xsl:if>
   </xsl:for-each>
 
   </filestocreate>
